@@ -1,4 +1,9 @@
-Good day, #name#! We will respond within #XX# hours. Contact #phone_number# for immediate assistance. 
+Good day, #name#!
 
-Sincerely,  
+Thank you for reaching out to our company! We have received your request for additional information and will send you a full response within #XX# hours.
+
+If you need immediate assistance, please contact us at #phone_number#.
+
+Sincerely,
+
 #signature#
