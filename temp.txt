@@ -1,1 +1,4 @@
-Template sample
+Good day, #name#! We will respond within #XX# hours. Contact #phone_number# for immediate assistance. 
+
+Sincerely,  
+#signature#
