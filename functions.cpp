@@ -7,13 +7,33 @@
 #include <QRegularExpression>
 #include <QMap>
 
-void writeOutput(const QString& filePath, const QStringList& lines) {
+
+
+
+void outputError(const Error& error) {
+    if (error.type == FAILED_TO_OPEN_FILE) {
+        qDebug() << "Failed to open a file: " << error.data << "\n";
+    }
+    else if(error.type == FAILED_TO_PARSE_JSON_FILE){
+        qDebug() << "Failed to open a file: " << error.data << "\n";
+    }
+    else if(error.type == UNKNOWN_PLACEHOLDER){
+         qDebug() << "Unknown placeholder" << error.data << "\n";
+    }
+}
+
+
+
+
+void writeOutput(const QString& filePath, const QStringList& lines, QVector<Error>& errors) {
     QFile outputFile(filePath);
     if (outputFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream stream(&outputFile);
         for (const QString& line : lines)
             stream << line << '\n';
         outputFile.close();
+    } else {
+        errors.push_back({FAILED_TO_OPEN_FILE, filePath});
     }
 }
 
@@ -21,7 +41,8 @@ QString getFileLocation(const QString& path) {
     return QDir::cleanPath(QDir::current().absoluteFilePath(path));
 }
 
-QMap<QString, QString> getJsonData(const QString& filePath) {
+
+QMap<QString, QString> getJsonData(const QString& filePath, QVector<Error>& errors) {
     QFile file(filePath);
     QMap<QString, QString> dataMap;
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -31,12 +52,17 @@ QMap<QString, QString> getJsonData(const QString& filePath) {
             for (const QString& key : jsonObject.keys()) {
                 dataMap[key] = jsonObject.value(key).toString();
             }
+        } else {
+            errors.push_back({FAILED_TO_PARSE_JSON_FILE, filePath});
         }
+    } else {
+        errors.push_back({FAILED_TO_OPEN_FILE, filePath});
     }
     return dataMap;
 }
 
-QStringList getFileData(const QString& filePath) {
+
+QStringList getFileData(const QString& filePath, QVector<Error>& errors) {
     QFile file(filePath);
     QStringList lines;
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -44,15 +70,16 @@ QStringList getFileData(const QString& filePath) {
         while (!in.atEnd()) {
             lines.append(in.readLine());
         }
+    } else {
+        errors.push_back({FAILED_TO_OPEN_FILE, filePath});
     }
     return lines;
 }
 
 
-QStringList generateEmail(const QStringList& temp, const QMap<QString, QString>& data) {
+QStringList generateEmail(const QStringList& temp, const QMap<QString, QString>& data, QVector<Error>& errors) {
     QStringList generated = temp;
-    // Updated regular expression to match new placeholder format
-    QRegularExpression regex("#(\\w+)#");  // Matches placeholders like #name#
+    QRegularExpression regex("#([^#\\n]*)#"); // Matches placeholders like #name#
     for (QString& line : generated) {
         QRegularExpressionMatchIterator it = regex.globalMatch(line);
         while (it.hasNext()) {
@@ -61,9 +88,18 @@ QStringList generateEmail(const QStringList& temp, const QMap<QString, QString>&
             if (data.contains(key)) {
                 line.replace(match.captured(0), data[key]);
             } else {
-                qDebug() << "Placeholder not found in data:" << match.captured(0);
+                // errors.push_back({"Placeholder not found in data", match.captured(0)});
+                errors.push_back({UNKNOWN_PLACEHOLDER, match.captured(0)});
             }
         }
     }
     return generated;
 }
+
+
+
+
+
+
+
+// \n,\t,\0,\",\\
