@@ -48,16 +48,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-/*
- getJsonData(dataFilePath) :: HAS ERROR
-        } else {
-        >>>> qDebug() << "Failed to parse JSON or JSON is not an object in file:" << filePath;
-        }
 
-...
-
->>>> generateEmail(templateContent, dataContent)
- */
 
 
 
